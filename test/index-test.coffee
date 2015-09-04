@@ -10,8 +10,8 @@ setImmediate    = setImmediate || process.nextTick
 
 
 isNumber        = require 'util-ex/lib/is/type/number'
-Task            = require 'task-registry'
 Tasks           = require '../src'
+Task            = require('task-registry-series').super_
 register        = Task.register
 aliases         = Task.aliases
 
