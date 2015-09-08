@@ -75,7 +75,9 @@ describe 'Tasks', ->
       result = tasks.executeSync options
       expect(result).have.length 1
       expect(result[0]).be.equal options
-      options.data.should.be.equal 101
+      expect(options).be.deep.equal
+        data: 101
+        tasks: ['Add1']
     it 'should run a task via task array2', ->
       result = tasks.executeSync ['Add1']
       expect(result).have.length 1
@@ -85,48 +87,70 @@ describe 'Tasks', ->
       result = tasks.executeSync options
       expect(result).have.length 2
       expect(result[0]).be.equal options
-      options.data.should.be.equal 103
+      expect(options).be.deep.equal
+        data: 103
+        tasks: ['Add1', 'Add2']
       options = data: 100, tasks:['Add1', {'Add2':null}]
       result = tasks.executeSync options
       expect(result).have.length 2
       expect(result[0]).be.equal options
-      options.data.should.be.equal 103
+      expect(options).be.deep.equal
+        data: 103
+        tasks: ['Add1', {'Add2':null}]
 
       options = data: 100, tasks:['Add1', 'Add2':{data:5}]
       result = tasks.executeSync options
       expect(result).have.length 2
       expect(result[0]).be.equal options
       expect(result[1].data).be.equal 7
-      options.data.should.be.equal 101
+      expect(options).be.deep.equal
+        data: 101
+        tasks: ['Add1', 'Add2':{data:7}]
 
     describe 'pipeline', ->
       it 'should run a task via task name', ->
         options = data: 100, tasks:'Add1', pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
-        options.data.should.be.equal 101
+        expect(options).be.deep.equal
+          data: 101
+          tasks: 'Add1'
+          pipeline:true
       it 'should run a task via task array', ->
-        options = data: 100, tasks:'Add1', pipeline:true
+        options = data: 100, tasks:['Add1'], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
         options.data.should.be.equal 101
+        expect(options).be.deep.equal
+          data: 101
+          tasks: ['Add1']
+          pipeline:true
       it 'should run tasks', ->
         options = data: 100, tasks:['Add1', 'Add2'], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
-        options.data.should.be.equal 103
+        expect(options).be.deep.equal
+          data: 103
+          tasks: ['Add1', 'Add2']
+          pipeline:true
 
       it 'should run tasks obj', ->
         options = data: 100, tasks:['Add1', {'Add2':null}], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
-        options.data.should.be.equal 103
+        expect(options).be.deep.equal
+          data: 103
+          tasks: ['Add1', {'Add2':null}]
+          pipeline:true
 
       it 'should run tasks obj with non-meaning args', ->
         options = data: 100, tasks:[{'Add1':null}, 'Add2':{data:5}], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
-        options.data.should.be.equal 103
+        expect(options).be.deep.equal
+          data: 103
+          tasks: [{'Add1':null}, 'Add2':{data:5}]
+          pipeline:true
 
       it 'should run tasks obj with meaning args', ->
         options = data: 100, tasks:[{'Add1':{data:10}, Add2:null}, 'Add2':{data:5}], pipeline:true
@@ -134,6 +158,10 @@ describe 'Tasks', ->
         Add2Task::_executeSync.should.be.calledTwice
         expect(result).be.not.equal options
         result.data.should.be.equal 15
+        expect(options).be.deep.equal
+          data: 100
+          tasks: [{'Add1':{data:15}, Add2:null}, 'Add2':{data:5}]
+          pipeline:true
 
   describe '.execute', ->
     tasks = Task 'Tasks'
@@ -144,6 +172,9 @@ describe 'Tasks', ->
           expect(result).have.length 1
           expect(result[0]).be.equal options
           options.data.should.be.equal 101
+          expect(options).be.deep.equal
+            data: 101
+            tasks: 'Add1'
         done(err)
     it 'should run a task via task name1', (done)->
       tasks.execute 'Add1', (err, result)->
@@ -157,7 +188,9 @@ describe 'Tasks', ->
         unless err
           expect(result).have.length 1
           expect(result[0]).be.equal options
-          options.data.should.be.equal 101
+          expect(options).be.deep.equal
+            data: 101
+            tasks: ['Add1']
         done(err)
     it 'should run a task via task array1', (done)->
       tasks.execute ['Add1'], (err, result)->
@@ -171,7 +204,9 @@ describe 'Tasks', ->
         unless err
           expect(result).have.length 2
           expect(result[0]).be.equal options
-          options.data.should.be.equal 103
+          expect(options).be.deep.equal
+            data: 103
+            tasks: ['Add1', 'Add2']
         done(err)
 
     it 'should run tasks obj', (done)->
@@ -180,7 +215,9 @@ describe 'Tasks', ->
         unless err
           expect(result).have.length 2
           expect(result[0]).be.equal options
-          options.data.should.be.equal 103
+          expect(options).be.deep.equal
+            data: 103
+            tasks: ['Add1', {'Add2':null}]
         done(err)
 
     it 'should run tasks obj with non-meaning arguments', (done)->
@@ -190,7 +227,9 @@ describe 'Tasks', ->
           expect(result).have.length 2
           expect(result[0]).be.equal options
           expect(result[1].data).be.equal 7
-          options.data.should.be.equal 101
+          expect(options).be.deep.equal
+            data: 101
+            tasks: ['Add1', 'Add2':{data:7}]
         done(err)
 
     describe 'pipeline', ->
@@ -199,21 +238,30 @@ describe 'Tasks', ->
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
-            options.data.should.be.equal 101
+            expect(options).be.deep.equal
+              data: 101
+              tasks: 'Add1'
+              pipeline:true
           done(err)
       it 'should run a task via task array', (done)->
-        options = data: 100, tasks:'Add1', pipeline:true
+        options = data: 100, tasks:['Add1'], pipeline:true
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
-            options.data.should.be.equal 101
+            expect(options).be.deep.equal
+              data: 101
+              tasks: ['Add1']
+              pipeline:true
           done(err)
       it 'should run tasks', (done)->
         options = data: 100, tasks:['Add1', 'Add2'], pipeline:true
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
-            options.data.should.be.equal 103
+            expect(options).be.deep.equal
+              data: 103
+              tasks: ['Add1', 'Add2']
+              pipeline:true
           done(err)
 
       it 'should run tasks obj', (done)->
@@ -221,7 +269,10 @@ describe 'Tasks', ->
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
-            options.data.should.be.equal 103
+            expect(options).be.deep.equal
+              data: 103
+              tasks: ['Add1', {'Add2':null}]
+              pipeline:true
           done(err)
 
       it 'should run tasks obj with non-meaning args', (done)->
@@ -230,6 +281,10 @@ describe 'Tasks', ->
           unless err
             expect(result).be.equal options
             options.data.should.be.equal 103
+            expect(options).be.deep.equal
+              data: 103
+              tasks: [{'Add1':null}, 'Add2':{data:5}]
+              pipeline:true
           done(err)
 
       it 'should run tasks obj with meaning args', (done)->
@@ -238,4 +293,8 @@ describe 'Tasks', ->
           unless err
             expect(result).be.not.equal options
             result.data.should.be.equal 13
+            expect(options).be.deep.equal
+              data: 100
+              tasks: [{'Add1':data:13}, 'Add2':{data:5}]
+              pipeline:true
           done(err)

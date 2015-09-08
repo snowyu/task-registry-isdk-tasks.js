@@ -1,6 +1,7 @@
 isObject    = require 'util-ex/lib/is/type/object'
 isString    = require 'util-ex/lib/is/type/string'
 isArray     = require 'util-ex/lib/is/type/array'
+extend      = require 'util-ex/lib/_extend'
 SeriesTask  = require 'task-registry-series'
 register    = SeriesTask.register
 aliases     = SeriesTask.aliases
@@ -18,20 +19,26 @@ module.exports = class IsdkTasks
   _initFirstTask: (aOptions)->
     if isString aOptions
       vTasks = [aOptions]
-      aOptions = tasks: vTasks
+      result = tasks: vTasks
+      aOptions = null
     else if isArray aOptions
-      vTasks = aOptions
-      aOptions = tasks: vTasks
+      vTasks = aOptions.slice()
+      result = tasks: vTasks
+      aOptions = null
     else if isObject aOptions
       vTasks = aOptions.tasks
       vPipeline = aOptions.pipeline
+      result = pipeline:vPipeline
       if isString vTasks
-        aOptions.tasks = vTasks = [vTasks]
+        result.tasks = vTasks = [vTasks]
+      else if isArray vTasks
+        result.tasks = vTasks = vTasks.slice()
 
     if vTasks and vTasks.length
       if vPipeline
         firstTask = vTasks[0]
         if isObject firstTask
+          vTasks[0] = firstTask = extend {}, firstTask
           vName = getKeys firstTask
           if vName.length
             vName = vName[0]
@@ -42,12 +49,13 @@ module.exports = class IsdkTasks
       else
         for task,i in vTasks
           if isObject task
+            vTasks[i] = task = extend {}, task
             for vName of task
               task[vName] = aOptions unless task[vName]?
           else if isString task
             vTasks[i] = vTask = {}
             vTask[task] = aOptions
-    aOptions
+    result
   executeSync: (aOptions)->
     super @_initFirstTask aOptions
 
