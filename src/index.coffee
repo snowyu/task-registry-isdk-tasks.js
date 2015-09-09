@@ -1,3 +1,4 @@
+setPrototypeOf = require 'inherits-ex/lib/setPrototypeOf'
 isObject    = require 'util-ex/lib/is/type/object'
 isString    = require 'util-ex/lib/is/type/string'
 isArray     = require 'util-ex/lib/is/type/array'
@@ -15,8 +16,36 @@ module.exports = class IsdkTasks
 
   constructor: -> return super
 
-  # pass the aOptions to the first task if the first has no arguments.
-  _initFirstTask: (aOptions)->
+  #process a task.
+  _initTask: (task, aOptions)->
+    assignOptsToTask = (aName)->
+      if task[aName]?
+        if task[aName].hasOwnProperty '<'
+          vOpts = task[aName]['<'] # task's inherited options
+          vOpts = extend {}, vOpts
+          setPrototypeOf vOpts, aOptions
+          task[aName] = vOpts
+      else
+        task[aName] = aOptions
+      return
+
+    if isObject task
+      task = extend {}, task
+      vNames = getKeys task # get the task names. 'task': options
+      if vNames.length
+        if aOptions.pipeline
+          assignOptsToTask vNames[0]
+        else for name in vNames
+          assignOptsToTask name
+    else if isString task
+      vTask = {}
+      vTask[task] = aOptions
+      task = vTask
+    task
+
+  # pipeline: pass the aOptions to the first task if the first has no arguments.
+  # non-pipeline: pass the aOptions to the task if the task has no arguments.
+  _initTasks: (aOptions)->
     if isString aOptions
       vTasks = [aOptions]
       result = tasks: vTasks
@@ -33,31 +62,38 @@ module.exports = class IsdkTasks
         result.tasks = vTasks = [vTasks]
       else if isArray vTasks
         result.tasks = vTasks = vTasks.slice()
+      else if isObject vTasks
+        result.tasks = vTasks = extend {}, vTasks
 
-    if vTasks and vTasks.length
+    if vTasks
       if vPipeline
-        firstTask = vTasks[0]
-        if isObject firstTask
-          vTasks[0] = firstTask = extend {}, firstTask
-          vName = getKeys firstTask
-          if vName.length
-            vName = vName[0]
-            firstTask[vName] = aOptions unless firstTask[vName]?
-        else if isString firstTask
-          vTasks[0] = vTask = {}
-          vTask[firstTask] = aOptions
+        if isArray vTasks
+          # get first task
+          if vTasks.length
+            task = vTasks[0]
+            vTasks[0] = @_initTask(task, aOptions)
+        else # it's an object
+          name = getKeys vTasks
+          if name.length
+            name = name[0]
+            task = {}
+            task[name] = vTasks[name]
+            task = @_initTask(task, aOptions)
+            vTasks[name] = task[name]
       else
-        for task,i in vTasks
-          if isObject task
-            vTasks[i] = task = extend {}, task
-            for vName of task
-              task[vName] = aOptions unless task[vName]?
-          else if isString task
-            vTasks[i] = vTask = {}
-            vTask[task] = aOptions
+        if isArray vTasks
+          for task,i in vTasks
+            vTasks[i] = @_initTask(task, aOptions)
+        else
+          for name, task of vTasks
+            vTask = {}
+            vTask[name] = task
+            vTask = @_initTask(vTask, aOptions)
+            vTasks[name] = vTask[name]
     result
+
   executeSync: (aOptions)->
-    super @_initFirstTask aOptions
+    super @_initTasks aOptions
 
   execute: (aOptions, done)->
-    super @_initFirstTask(aOptions), done
+    super @_initTasks(aOptions), done

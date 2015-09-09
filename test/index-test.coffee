@@ -9,6 +9,7 @@ chai.use(sinonChai)
 setImmediate    = setImmediate || process.nextTick
 
 
+getPrototypeOf  = require 'inherits-ex/lib/getPrototypeOf'
 isNumber        = require 'util-ex/lib/is/type/number'
 Tasks           = require '../src'
 Task            = require('task-registry-series').super_
@@ -90,22 +91,33 @@ describe 'Tasks', ->
       expect(options).be.deep.equal
         data: 103
         tasks: ['Add1', 'Add2']
-      options = data: 100, tasks:['Add1', {'Add2':null}]
+
+      options = data: 100, tasks:['Add1', {'Add2':null, 'Add1':null}]
       result = tasks.executeSync options
-      expect(result).have.length 2
+      expect(result).have.length 3
       expect(result[0]).be.equal options
       expect(options).be.deep.equal
-        data: 103
-        tasks: ['Add1', {'Add2':null}]
+        data: 104
+        tasks: ['Add1', {'Add2':null, 'Add1': null}]
 
-      options = data: 100, tasks:['Add1', 'Add2':{data:5}]
+      options = data: 100, tasks:['Add1', {'Add2':{data:5}, 'Add1':{data:2}}]
       result = tasks.executeSync options
-      expect(result).have.length 2
+      expect(result).have.length 3
       expect(result[0]).be.equal options
       expect(result[1].data).be.equal 7
+      expect(result[2].data).be.equal 3
       expect(options).be.deep.equal
         data: 101
-        tasks: ['Add1', 'Add2':{data:7}]
+        tasks: ['Add1', {'Add2':{data:7}, 'Add1':{data:3}}]
+    it 'should run tasks obj with inherited args', ->
+      options = data: 100, tasks: {'Add1': {'<': data: 1}}
+      result = tasks.executeSync options
+      expect(result).to.have.length 1
+      expect(getPrototypeOf result[0]).to.be.equal options
+      expect(result[0].data).be.equal 2
+      expect(options).be.deep.equal
+        data: 100
+        tasks: {'Add1': {'<': data: 1}}
 
     describe 'pipeline', ->
       it 'should run a task via task name', ->
@@ -135,21 +147,21 @@ describe 'Tasks', ->
           pipeline:true
 
       it 'should run tasks obj', ->
-        options = data: 100, tasks:['Add1', {'Add2':null}], pipeline:true
+        options = data: 100, tasks:['Add1', {'Add2':null, 'Add1':null}], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
         expect(options).be.deep.equal
-          data: 103
-          tasks: ['Add1', {'Add2':null}]
+          data: 104
+          tasks: ['Add1', {'Add2':null, 'Add1':null}]
           pipeline:true
 
       it 'should run tasks obj with non-meaning args', ->
-        options = data: 100, tasks:[{'Add1':null}, 'Add2':{data:5}], pipeline:true
+        options = data: 100, tasks:[{'Add1':null, 'Add2':{data:1}}, 'Add2':{data:5}], pipeline:true
         result = tasks.executeSync options
         expect(result).be.equal options
         expect(options).be.deep.equal
-          data: 103
-          tasks: [{'Add1':null}, 'Add2':{data:5}]
+          data: 105
+          tasks: [{'Add1':null, 'Add2':{data:1}}, 'Add2':{data:5}]
           pipeline:true
 
       it 'should run tasks obj with meaning args', ->
@@ -161,6 +173,16 @@ describe 'Tasks', ->
         expect(options).be.deep.equal
           data: 100
           tasks: [{'Add1':{data:15}, Add2:null}, 'Add2':{data:5}]
+          pipeline:true
+
+      it 'should run tasks obj with inherited args', ->
+        options = data: 100, tasks: {'Add1': {'<': data: 1}, 'Add2':null}, pipeline:true
+        result = tasks.executeSync options
+        expect(getPrototypeOf result).to.be.equal options
+        expect(result.data).be.equal 4
+        expect(options).be.deep.equal
+          data: 100
+          tasks: {'Add1': {'<': data: 1}, 'Add2':null}
           pipeline:true
 
   describe '.execute', ->
@@ -210,26 +232,37 @@ describe 'Tasks', ->
         done(err)
 
     it 'should run tasks obj', (done)->
-      options = data: 100, tasks:['Add1', {'Add2':null}]
+      options = data: 100, tasks:['Add1', {'Add2':null, 'Add1':null}]
       tasks.execute options, (err, result)->
         unless err
-          expect(result).have.length 2
+          expect(result).have.length 3
           expect(result[0]).be.equal options
           expect(options).be.deep.equal
-            data: 103
-            tasks: ['Add1', {'Add2':null}]
+            data: 104
+            tasks: ['Add1', {'Add2':null, 'Add1':null}]
         done(err)
 
     it 'should run tasks obj with non-meaning arguments', (done)->
-      options = data: 100, tasks:['Add1', 'Add2':{data:5}]
+      options = data: 100, tasks:['Add1', {'Add2':{data:5}, 'Add1':{data:1}}]
       tasks.execute options, (err, result)->
         unless err
-          expect(result).have.length 2
+          expect(result).have.length 3
           expect(result[0]).be.equal options
           expect(result[1].data).be.equal 7
           expect(options).be.deep.equal
             data: 101
-            tasks: ['Add1', 'Add2':{data:7}]
+            tasks: ['Add1', {'Add2':{data:7}, 'Add1':{data:2}}]
+        done(err)
+    it 'should run tasks obj with inherited args', (done)->
+      options = data: 100, tasks: {'Add1': {'<': data: 1}}
+      tasks.execute options, (err, result)->
+        unless err
+          expect(result).to.have.length 1
+          expect(getPrototypeOf result[0]).to.be.equal options
+          expect(result[0].data).be.equal 2
+          expect(options).be.deep.equal
+            data: 100
+            tasks: {'Add1': {'<': data: 1}}
         done(err)
 
     describe 'pipeline', ->
@@ -265,25 +298,24 @@ describe 'Tasks', ->
           done(err)
 
       it 'should run tasks obj', (done)->
-        options = data: 100, tasks:['Add1', {'Add2':null}], pipeline:true
+        options = data: 100, tasks:['Add1', {'Add2':null, 'Add1':null}], pipeline:true
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
             expect(options).be.deep.equal
-              data: 103
-              tasks: ['Add1', {'Add2':null}]
+              data: 104
+              tasks: ['Add1', {'Add2':null, 'Add1':null}]
               pipeline:true
           done(err)
 
       it 'should run tasks obj with non-meaning args', (done)->
-        options = data: 100, tasks:[{'Add1':null}, 'Add2':{data:5}], pipeline:true
+        options = data: 100, tasks:[{'Add1':null, 'Add2':{data:2}}, 'Add2':{data:5}], pipeline:true
         tasks.execute options, (err, result)->
           unless err
             expect(result).be.equal options
-            options.data.should.be.equal 103
             expect(options).be.deep.equal
-              data: 103
-              tasks: [{'Add1':null}, 'Add2':{data:5}]
+              data: 105
+              tasks: [{'Add1':null, 'Add2':{data:2}}, 'Add2':{data:5}]
               pipeline:true
           done(err)
 
@@ -296,5 +328,17 @@ describe 'Tasks', ->
             expect(options).be.deep.equal
               data: 100
               tasks: [{'Add1':data:13}, 'Add2':{data:5}]
+              pipeline:true
+          done(err)
+
+      it 'should run tasks obj with inherited args', (done)->
+        options = data: 100, tasks: {'Add1': {'<': data: 1}, 'Add2':null}, pipeline:true
+        tasks.execute options, (err, result)->
+          unless err
+            expect(getPrototypeOf result).to.be.equal options
+            expect(result.data).be.equal 4
+            expect(options).be.deep.equal
+              data: 100
+              tasks: {'Add1': {'<': data: 1}, 'Add2':null}
               pipeline:true
           done(err)
