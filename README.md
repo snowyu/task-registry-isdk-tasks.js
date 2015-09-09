@@ -40,12 +40,39 @@ var result = tasks.executeSync(aObject) //result=[aOptions, 126]
 aObject = {data: 123, tasks: ['ATask', 'BTask'], pipeline:true}
 result = tasks.executeSync(aObject) //result=126
 
+//the inherited options passed to 'ATask'
+aObject = {data: 123, tasks: [{'ATask': {'>': {b:12}}}], pipeline:true}
+result = tasks.executeSync(aObject)
+Object.getPrototypeOf(result).should.be.equal aObject
+result.data.should.be.equal 124
+result.b.should.be.equal 12
 ```
 
 ## API
 
 
 ## TODO
+
+## Changes
+
+
+### v0.2
+
++ Task Options inheritence Flag: "<"
+
+```coffee
+aObject =
+  data: 123
+  a: 4
+  tasks: [
+    'ATask':
+      '>':
+        a:6
+  , 'BTask'
+  ]
+result = tasks.executeSync(aObject)
+```
+The inherited `aObject` options should be passed to ATask and the `a` is 6 : `{a:6}`
 
 
 ## License
