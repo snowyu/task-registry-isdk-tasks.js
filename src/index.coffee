@@ -57,7 +57,9 @@ module.exports = class IsdkTasks
     else if isObject aOptions
       vTasks = aOptions.tasks
       vPipeline = aOptions.pipeline
-      result = pipeline:vPipeline
+      result =
+        pipeline: vPipeline
+        raiseError: !!aOptions.raiseError
       if isString vTasks
         result.tasks = vTasks = [vTasks]
       else if isArray vTasks
