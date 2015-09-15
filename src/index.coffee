@@ -59,6 +59,7 @@ module.exports = class IsdkTasks
       vPipeline = aOptions.pipeline
       result =
         pipeline: vPipeline
+        force: aOptions.force
         raiseError: !!aOptions.raiseError
       if isString vTasks
         result.tasks = vTasks = [vTasks]
