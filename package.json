@@ -1,7 +1,7 @@
 {
   "name": "task-registry-isdk-tasks",
   "description": "The hierarchical task registry collects tasks to execute synchronously or asynchronously.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "homepage": "https://github.com/snowyu/task-registry-isdk-tasks.js",
   "repository": {
     "type": "git",
